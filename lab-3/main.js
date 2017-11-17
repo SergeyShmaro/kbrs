@@ -1,5 +1,7 @@
-const M = 97;//59;
-let A = 2;
+const sha1 = require('js-sha1'); 
+
+const M = 59;
+let A = 3;
 let B = 3;
 let G = null;
 
@@ -76,6 +78,20 @@ const findBack = n => {
     return result;
 }
 
+const powModN = (x, deg, n) => {
+    let result = 1;
+    for (let i = 0; i < deg; i++) {
+        result = ((result % n) * (x % n)) % n; 
+    }
+    return result;
+}
+
+const hex2decModN = (hex, n) => {
+    const decNumbers = hex.split('').map(item => parseInt(item, 16));
+    const decNumbersVsStepOf16 = decNumbers.map((item, index) => (item % n) * powModN(16, decNumbers.length - index - 1, n));
+    return decNumbersVsStepOf16.reduce((a, b) => ((a % n) + (b % n)) % n);
+}
+
 const addPoints = (Xp, Yp, Xq, Yq) => {
     const m = findm(Xp, Yp, Xq, Yq);
     let result = { };
@@ -113,12 +129,10 @@ const checkSize = n => {
 
 const chooseG = () => {
     let size = checkSize(X.length);
-    console.log(size);
     let index = parseInt(Math.random() * Math.pow(10, size), 10);
     while (index >= X.length) {
         index = parseInt(Math.random() * Math.pow(10, size), 10);
     }
-    console.log(index);
     G = {
         x: X[index],
         y: Y[index]
@@ -132,12 +146,7 @@ const multPoint = (x, y, n) => {
         Xr: x,
         Yr: y
     };
-    // let retry = [ 
-    //     {
-    //         Xr: x,
-    //         Yr: y
-    //     }
-    // ];
+
     for (let i = 0; i < n - 1; i++) {
         res = addPoints(curX, curY, x, y);
         curX = res.Xr;
@@ -163,14 +172,26 @@ const generateKey = () => {
 
     return res;
 }
+
+const searchExpOfPoint = (x, y) => {
+    let result = 1;
+    let currentPoint = addPoints(x, y, x, y);
+    while ((currentPoint.Xr !== x || currentPoint.Yr !== y) ) 
+    {
+        result++;
+        currentPoint = addPoints(currentPoint.Xr, currentPoint.Yr, x, y);
+    }
+    return result;
+}
+
 chooseG();
-console.log(/*'G = ' + */G);
-const Pa = generateKey();
-const Pb = generateKey();
-console.log(/*'Pa = ' + */Pa);
-console.log(/*'Pb = ' + */Pb);
-console.log(multPoint(Pa.Xr, Pa.Yr, Pb.n));
-console.log(multPoint(Pb.Xr, Pb.Yr, Pa.n));
+// console.log(/*'G = ' + */G);
+// const Pa = generateKey();
+// const Pb = generateKey();
+// console.log(/*'Pa = ' + */Pa);
+// console.log(/*'Pb = ' + */Pb);
+// console.log(multPoint(Pa.Xr, Pa.Yr, Pb.n));
+// console.log(multPoint(Pb.Xr, Pb.Yr, Pa.n));
 
 
 //console.log(findBack(4));
@@ -208,3 +229,11 @@ console.log(multPoint(Pb.Xr, Pb.Yr, Pa.n));
 // console.log(multPoint(17,10,10));
 //80 10 dolzno 0 87 stalo inf inf
 // console.log (addPoints(80, 10, 17, 10));
+
+// console.log('2fd4e1c67a2d28fced849ee1bb76e7391b93eb12'.length);
+// let lol = parseInt(sha1('hello'), 16);
+// console.log(lol);
+
+// console.log(hex2decModN('11111111111111' , 22));
+console.log(G);
+console.log(searchExpOfPoint(G.x, G.y));
